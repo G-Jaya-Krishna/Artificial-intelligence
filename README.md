@@ -1,10 +1,16 @@
 # Artificial-intelligence
 **COMPANY** : CODTECH IT SOLUTIONS
+
 **NAME**:G JAYA KRISHNA
+
 **INTRERN ID**:CT08JLZ
+
 **DOMAIN**:ARTIFICIAL INTELLIGENCE
+
 **BATCH DURATION**:January 5th, 2025 to February 5th, 2025
+
 **MENTOR NAME**:NEELA SANTHOSH
+
 #This project focuses on implementing artificial intelligence techniques to solve a specific problem. The system utilizes machine learning, deep learning, and/or natural language processing to analyze data, make predictions, and improve decision-making.
 
 Features
