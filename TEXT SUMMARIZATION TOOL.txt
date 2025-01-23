@@ -1,38 +1,61 @@
-from spacy import load
-import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
-from spacy.lang.en.stop_words import STOP_WORDS
-from string import punctuation
-nlp = load("en_core_web_sm")
 
-def summarize(text,  per_sent_limit=0.2):
-    """
-    Summarizes a given text utilizing sentence similarity and  ranking.
-    
-    Args:
-        text (str): The text that requires summarization.
-         per_sent_limit (float): The proportion of sentences to be included in the summary.
+#How to Run the Script
+#Save the Script: Copy the code into a Python file, e.g., text_summarizer.py.
+#Install Required Libraries: Make sure you have the necessary libraries installed:pip install requests beautifulsoup4 gensim nltk
+#Run the Script:
+#python text_summarizer.py
+#Input URL: When prompted, enter a valid URL of an article.
 
-    Returns:
-         str: The resulting summarized text.
-    """
-    doc  = nlp(text)
-    sentences =  [sent.text.strip() for sent in doc.sents if sent.text.strip()]
-    sentence_vectors = []
-    for sent in sentences:
-         tokens = [token.text.lower() for token in nlp(sent) if  token.text.lower() not in STOP_WORDS and token.text not in punctuation]
-         if tokens:
-            sentence_vector =  np.mean([nlp.vocab[token].vector for token in tokens if token in nlp.vocab],  axis=0)
-            sentence_vectors.append(sentence_vector)
-    similarity_matrix = cosine_similarity(sentence_vectors)
-    sentence_scores = similarity_matrix.sum(axis=1)
-    ranked_sentences = [sentences[i] for i in  sentence_scores.argsort()[::-1]]
-    num_sentences =  max(1, int(len(ranked_sentences) * per_sent_limit))
-    summary_sentences =  ranked_sentences[:num_sentences]
-    summary = "  ".join(summary_sentences)
-    return summary
-text = """
-Your input text  goes here. It can be any length, and the summarizer will attempt to distill the most  important sentences based on their content and relevance. The algorithm works by calculating the similarities between the sentences in  the text.
-"""
-summary = summarize(text)
-print("Summary:\n", summary)
+
+from nltk.tokenize import word_tokenize, sent_tokenize
+from gensim.summarization import summarize
+from bs4 import BeautifulSoup
+import requests
+import nltk
+nltk.download("punkt")
+nltk.download("stopwords")
+def fetch_article(url):
+    """Fetch the article content from the given URL."""
+    try:
+        response = requests.get(url)
+        if response.status_code != 200:
+            return f"Error: HTTP {response.status_code} - Unable to fetch the article."
+        soup = BeautifulSoup(response.content, 'html.parser')
+        paragraphs = soup.find_all('p')
+        article_text = ' '.join([para.get_text() for para in paragraphs])
+        return article_text
+
+    except requests.exceptions.RequestException as e:
+        return f"Request failed: {e}"
+
+def preprocess_text(text):
+    """Preprocess the text by tokenizing sentences and words."""
+    sentences = sent_tokenize(text)
+    words = word_tokenize(text)
+    return sentences, words
+
+def summarize_text(text):
+    """Summarize the text using Gensim's summarize function."""
+    try:
+        return summarize(text)
+    except ValueError:
+        return "Text too short to summarize."
+
+def extract_text_from_url(url):
+    """Main function to fetch, preprocess, and summarize the article."""
+    article_text = fetch_article(url)
+    if "Error" in article_text or "failed" in article_text:
+        return article_text
+
+    sentences, words = preprocess_text(article_text)
+    summary = summarize_text(article_text)
+
+    return {
+        'original_text': article_text,
+        'sentences_count': len(sentences),
+        'words_count': len(words),
+        'summary': summary
+    }
+url = "https://en.wikipedia.org/wiki/Artificial_intelligence"  
+result = extract_text_from_url(url)
+print(result)
